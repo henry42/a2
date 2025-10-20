@@ -80,6 +80,15 @@ pub struct DefaultAlert<'a> {
     launch_image: Option<&'a str>,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq,Deserialize, Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum InterruptionLevel {
+    Active,
+    Critical,
+    Passive,
+    TimeSensitive,
+}
+
 /// A builder to create an APNs payload.
 ///
 /// # Example
@@ -103,7 +112,8 @@ pub struct DefaultAlert<'a> {
 ///     .set_title_loc_key("STOP")
 ///     .set_title_loc_args(&["herp", "derp"])
 ///     .set_loc_key("PAUSE")
-///     .set_loc_args(&["narf", "derp"]);
+///     .set_loc_args(&["narf", "derp"])
+///     .set_interruption_level(InterruptionLevel::Critical);
 /// let payload = builder.build("device_id", Default::default())
 ///   .to_json_string().unwrap();
 /// # }
@@ -117,6 +127,7 @@ pub struct DefaultNotificationBuilder<'a> {
     mutable_content: u8,
     content_available: Option<u8>,
     has_edited_alert: bool,
+    interruption_level: Option<InterruptionLevel>
 }
 
 impl<'a> DefaultNotificationBuilder<'a> {
@@ -160,6 +171,7 @@ impl<'a> DefaultNotificationBuilder<'a> {
             mutable_content: 0,
             content_available: None,
             has_edited_alert: false,
+            interruption_level: None
         }
     }
 
@@ -516,6 +528,14 @@ impl<'a> DefaultNotificationBuilder<'a> {
         self.content_available = Some(1);
         self
     }
+
+    /// Used for setting interruption level to push notifications
+    pub fn set_interruption_level(mut self, level: InterruptionLevel) -> Self {
+        self.interruption_level = Some(level);
+        self
+    }
+
+
 }
 
 impl<'a> NotificationBuilder<'a> for DefaultNotificationBuilder<'a> {
@@ -536,6 +556,14 @@ impl<'a> NotificationBuilder<'a> for DefaultNotificationBuilder<'a> {
                 category: self.category,
                 mutable_content: Some(self.mutable_content),
                 url_args: None,
+                interruption_level : self.interruption_level.map(|v| {
+                    match v {
+                        InterruptionLevel::Active => "active",
+                        InterruptionLevel::Critical => "critical",
+                        InterruptionLevel::Passive => "passive",
+                        InterruptionLevel::TimeSensitive => "time-sensitive",
+                    }
+                })
             },
             device_token,
             options,
@@ -591,7 +619,8 @@ mod tests {
             .set_title_loc_key("STOP")
             .set_title_loc_args(&["herp", "derp"])
             .set_loc_key("PAUSE")
-            .set_loc_args(&["narf", "derp"]);
+            .set_loc_args(&["narf", "derp"])
+            .set_interruption_level(InterruptionLevel::Critical);
 
         let payload = builder.build("device-token", Default::default());
 
@@ -615,6 +644,7 @@ mod tests {
                 },
                 "category": "cat1",
                 "mutable-content": 1,
+                "interruption-level" : "critical"
             }
         });
 

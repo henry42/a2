@@ -189,6 +189,9 @@ pub struct APS<'a> {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub url_args: Option<&'a [&'a str]>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub interruption_level: Option<&'a str>,
 }
 
 /// Different notification content types.

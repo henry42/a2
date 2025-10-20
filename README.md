@@ -11,6 +11,11 @@ HTTP/2 Apple Push Notification Service for Rust using Tokio and async sending.
 
 Needs a Tokio executor version 1.0 or later and Rust compiler version 1.60.0 or later.
 
+## Changes from `reown-com/a2`
+
+1. Fixed an issue causing duplicate signing across multiple threads.  
+2. Added support for configuring the interruption level.
+
 ## Features
 
 * Fast asynchronous sending, based on [h2](https://github.com/carllerche/h2) and
